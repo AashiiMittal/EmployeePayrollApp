@@ -52,7 +52,7 @@ public class EmployeeController {
         }
     }
 
-    // DELETE: Delete employee by ID
+    // DELETE: Delete empl Supporting the REST API Calls in the Controlleroyee by ID
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
         if (employeeRepository.existsById(id)) {
