@@ -1,4 +1,4 @@
-package com.example.employee_payroll_app.DTOs;
+package com.example.employee_payroll_app.dto;
 
 public class EmployeeDTO {
     private String name;
