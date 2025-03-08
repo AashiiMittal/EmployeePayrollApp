@@ -98,51 +98,138 @@ package com.example.employee_payroll_app.Controllers;
 //    }
 //}
 
+// UC9 - Data Validation
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.validation.annotation.Validated;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.http.HttpStatus;
+//import org.springframework.web.bind.annotation.*;
+//import org.springframework.validation.annotation.Validated;
+//import jakarta.validation.Valid;
+//import org.springframework.http.ResponseEntity;
+//import com.example.employee_payroll_app.dto.EmployeeDTO;
+//import com.example.employee_payroll_app.Services.EmployeeService;
+//import java.util.List;
+//
+//@RestController
+//@RequestMapping("/employees")
+//@Validated
+//public class EmployeeController {
+//
+//    @Autowired
+//    private EmployeeService employeeService;
+//
+//    @GetMapping("/")
+//    public List<EmployeeDTO> getAllEmployees() {
+//        return employeeService.getAllEmployees();
+//    }
+//
+//    @GetMapping("/{id}")
+//    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
+//        EmployeeDTO employee = employeeService.getEmployeeById(id);
+//        return employee != null ? ResponseEntity.ok(employee) : ResponseEntity.notFound().build();
+//    }
+//
+//    @PostMapping("/add")
+//    public ResponseEntity<EmployeeDTO> addEmployee(@Valid @RequestBody EmployeeDTO employeeDTO) {
+//        EmployeeDTO savedEmployee = employeeService.createEmployee(employeeDTO);
+//        return new ResponseEntity<>(savedEmployee, HttpStatus.CREATED);
+//    }
+//
+//    @PutMapping("/update/{id}")
+//    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeDTO employeeDTO) {
+//        EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
+//        return ResponseEntity.ok(updatedEmployee);
+//    }
+//
+//    @DeleteMapping("/employee/{id}")
+//    public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
+//        employeeService.deleteEmployee(id);
+//        return ResponseEntity.ok("Employee deleted successfully!");
+//    }
+//}
+
 import com.example.employee_payroll_app.dto.EmployeeDTO;
 import com.example.employee_payroll_app.Services.EmployeeService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/employees")
-@Validated
 public class EmployeeController {
 
     @Autowired
     private EmployeeService employeeService;
 
+    // ✅ Get All Employees
     @GetMapping("/")
-    public List<EmployeeDTO> getAllEmployees() {
-        return employeeService.getAllEmployees();
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
+        List<EmployeeDTO> employees = employeeService.getAllEmployees();
+        return ResponseEntity.ok(employees);
     }
 
+    // ✅ Get Employee By ID with Exception Handling
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
-        EmployeeDTO employee = employeeService.getEmployeeById(id);
-        return employee != null ? ResponseEntity.ok(employee) : ResponseEntity.notFound().build();
+    public ResponseEntity<?> getEmployeeById(@PathVariable Long id) {
+        try {
+            EmployeeDTO employee = employeeService.getEmployeeById(id);
+            return ResponseEntity.ok(employee);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found with ID: " + id);
+        }
     }
 
+    // ✅ Add Employee with Validation Errors Handled
     @PostMapping("/add")
-    public ResponseEntity<EmployeeDTO> addEmployee(@Valid @RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<?> addEmployee(@Valid @RequestBody EmployeeDTO employeeDTO, BindingResult result) {
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(getValidationErrors(result));
+        }
         EmployeeDTO savedEmployee = employeeService.createEmployee(employeeDTO);
         return new ResponseEntity<>(savedEmployee, HttpStatus.CREATED);
     }
 
+    // ✅ Update Employee with Exception Handling
     @PutMapping("/update/{id}")
-    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeDTO employeeDTO) {
-        EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
-        return ResponseEntity.ok(updatedEmployee);
+    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeDTO employeeDTO, BindingResult result) {
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(getValidationErrors(result));
+        }
+        try {
+            EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
+            return ResponseEntity.ok(updatedEmployee);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found with ID: " + id);
+        }
     }
 
-    @DeleteMapping("/employee/{id}")
-    public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
-        employeeService.deleteEmployee(id);
-        return ResponseEntity.ok("Employee deleted successfully!");
+    // ✅ Delete Employee with Exception Handling
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+        try {
+            employeeService.deleteEmployee(id);
+            return ResponseEntity.ok("Employee deleted successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found with ID: " + id);
+        }
+    }
+
+    // 🔹 Utility Method to Handle Validation Errors
+    private Map<String, String> getValidationErrors(BindingResult result) {
+        Map<String, String> errors = new HashMap<>();
+        for (FieldError error : result.getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
+        return errors;
     }
 }
+
+
