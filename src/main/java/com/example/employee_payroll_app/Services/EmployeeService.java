@@ -74,7 +74,7 @@ public class EmployeeService implements IEmployeeService {
 
     // Convert Employee to EmployeeDTO
     private EmployeeDTO convertToDTO(Employee employee) {
-        return new EmployeeDTO(employee.getId(), employee.getName(), employee.getSalary(), employee.getDepartment());
+        return new EmployeeDTO(employee.getId(), employee.getName(), employee.getDepartment(), employee.getSalary());
     }
 
     @Override
@@ -93,7 +93,7 @@ public class EmployeeService implements IEmployeeService {
 
         Employee savedEmployee = employeeRepository.save(employee);
 
-        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getSalary(), savedEmployee.getDepartment());
+        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getDepartment(), savedEmployee.getSalary());
     }
 
     @Override
