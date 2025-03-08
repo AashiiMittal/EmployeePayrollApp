@@ -40,9 +40,36 @@
 //    }
 //}
 
-/// /USING LOMBOK LIBRARY:
+// USING LOMBOK LIBRARY:
+//package com.example.employee_payroll_app.dto;
+//
+//import lombok.AllArgsConstructor;
+//import lombok.Data;
+//import lombok.NoArgsConstructor;
+//
+//@Data
+//@NoArgsConstructor
+//@AllArgsConstructor
+//public class EmployeeDTO {
+//
+//    private Long id;
+//    private String name;
+//    private String department;  // Should be String
+//    private double salary;      // Should be double
+//
+//    public EmployeeDTO(Long id, String name, double salary, String department) {
+//        this.id = id;
+//        this.name = name;
+//        this.salary = salary;
+//        this.department = department;
+//    }
+//}
+
+// UC9 -  Data Validation and Exception Handling in Employee Payroll Service
+
 package com.example.employee_payroll_app.dto;
 
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,14 +80,22 @@ import lombok.NoArgsConstructor;
 public class EmployeeDTO {
 
     private Long id;
-    private String name;
-    private String department;  // Should be String
-    private double salary;      // Should be double
 
-    public EmployeeDTO(Long id, String name, double salary, String department) {
-        this.id = id;
-        this.name = name;
-        this.salary = salary;
-        this.department = department;
-    }
+    @NotBlank(message = "Employee name cannot be empty")
+    @Pattern(regexp = "^[A-Z][a-zA-Z ]{2,}$", message = "Name must start with a capital letter and have at least 3 characters")
+    private String name;
+
+    @NotBlank(message = "Department cannot be empty")
+    private String department;
+
+    @Min(value = 20000, message = "Salary must be at least 20000")
+    private double salary;
+
+//    public EmployeeDTO(Long id, String name, String department, double salary) {
+//        this.id =id;
+//        this.name= name;
+//        this.department=department;
+//        this.salary=salary;
+//    }
+//    public EmployeeDTO() {}
 }
