@@ -20,6 +20,8 @@ public class UserService implements IUserService {
     private UserRepository userRepository;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private EmailService emailService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -36,6 +38,11 @@ public class UserService implements IUserService {
         user.setEmail(userdto.getEmail());
         user.setPassword(passwordEncoder.encode(userdto.getPassword())); // Encrypt password
         userRepository.save(user);
+        // Send welcome email
+        String subject = "Welcome to Our Platform!";
+        String body = "<h1>Hello " + userdto.getUsername() + "!</h1>"
+                + "<p>Thank you for registering on our platform.</p>";
+        emailService.sendEmail(user.getEmail(), subject, body);
 
         log.info("User {} registered successfully.", user.getEmail());
         return "User registered successfully!";
@@ -76,6 +83,11 @@ public class UserService implements IUserService {
         User user = userOpt.get();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        // Send email notification
+        String subject = "Password Change Notification";
+        String content = "<h2>Hello " + user.getUsername() + ",</h2>"
+                + "<p>Your password has been changed successfully.</p>";
+        emailService.sendEmail(user.getEmail(), subject, content);
         log.info("Password updated successfully for email: {}", email);
         return "Password has been changed successfully!";
     }
@@ -98,6 +110,11 @@ public class UserService implements IUserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        // Send email notification
+        String subject = "Password Reset Notification";
+        String content = "<h2>Hello " + user.getUsername() + ",</h2>"
+                + "<p>Your password has been reset successfully.</p>";
+        emailService.sendEmail(user.getEmail(), subject, content);
         log.info("Password reset successful for email: {}", email);
         return "Password reset successfully!";
     }
