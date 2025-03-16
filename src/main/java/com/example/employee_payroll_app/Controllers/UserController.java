@@ -76,4 +76,31 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Login failed: " + e.getMessage()));
         }
     }
+
+    // Forgot Password
+    @PutMapping("/forgot-Password/{email}")
+    public ResponseEntity<?> forgotPassword(@PathVariable String email, @Valid @RequestBody Map<String, String> request) {
+        try {
+            String newPassword = request.get("newPassword");
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "New password cannot be empty!"));
+            }
+
+            String response = userService.forgotPassword(email, newPassword);
+            return ResponseEntity.ok(Map.of("message", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to reset password: " + e.getMessage()));
+        }
+    }
+
+    // Reset Password
+    @PutMapping("/reset-Password/{email}")
+    public ResponseEntity<?> resetPassword(@PathVariable String email, @Valid @RequestParam String currentPassword, @Valid @RequestParam String newPassword) {
+        try {
+            String response = userService.resetPassword(email, currentPassword, newPassword);
+            return ResponseEntity.ok(Map.of("message", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Password reset failed: " + e.getMessage()));
+        }
+    }
 }

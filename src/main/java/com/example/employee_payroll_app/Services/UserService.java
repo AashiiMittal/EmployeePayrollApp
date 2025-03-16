@@ -6,6 +6,7 @@ import com.example.employee_payroll_app.Repositories.UserRepository;
 import com.example.employee_payroll_app.security.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -61,5 +62,45 @@ public class UserService implements IUserService {
         log.info("Login successful for user: {}", email);
         return jwtUtil.generateToken(email);
     }
+
+    // Forgot Password Implementation
+    @Override
+    public String forgotPassword(String email, String newPassword) {
+        log.info("Processing forgot password request for email: {}", email);
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.warn("Forgot password request failed: No user found for email: {}", email);
+            return "Sorry! We cannot find the user email: " + email;
+        }
+
+        User user = userOpt.get();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password updated successfully for email: {}", email);
+        return "Password has been changed successfully!";
+    }
+
+    // Reset Password Implementation
+    @Override
+    public String resetPassword(String email, String currentPassword, String newPassword) {
+        log.info("Resetting password for email: {}", email);
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.warn("Password reset failed: No user found for email: {}", email);
+            return "User not found with email: " + email;
+        }
+        User user = userOpt.get();
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            log.warn("Password reset failed: Incorrect current password for email: {}", email);
+            return "Current password is incorrect!";
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password reset successful for email: {}", email);
+        return "Password reset successfully!";
+    }
+
 }
 
