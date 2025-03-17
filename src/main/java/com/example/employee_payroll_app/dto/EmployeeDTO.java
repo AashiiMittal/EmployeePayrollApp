@@ -73,12 +73,13 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeeDTO {
-
+public class EmployeeDTO implements Serializable {
+    private static final long serialVersionUID = 1L; // Required for serialization
     private Long id;
 
     @NotBlank(message = "Employee name cannot be empty")

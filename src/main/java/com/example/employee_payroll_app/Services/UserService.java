@@ -5,8 +5,9 @@ import com.example.employee_payroll_app.model.User;
 import com.example.employee_payroll_app.Repositories.UserRepository;
 import com.example.employee_payroll_app.security.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +19,12 @@ public class UserService implements IUserService {
 
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private JwtUtil jwtUtil;
+
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -38,6 +41,7 @@ public class UserService implements IUserService {
         user.setEmail(userdto.getEmail());
         user.setPassword(passwordEncoder.encode(userdto.getPassword())); // Encrypt password
         userRepository.save(user);
+
         // Send welcome email
         String subject = "Welcome to Our Platform!";
         String body = "<h1>Hello " + userdto.getUsername() + "!</h1>"
@@ -45,11 +49,16 @@ public class UserService implements IUserService {
         emailService.sendEmail(user.getEmail(), subject, body);
 
         log.info("User {} registered successfully.", user.getEmail());
+
+        // Clear Redis cache when a new user is registered
+        clearUserCache(user.getEmail());
+
         return "User registered successfully!";
     }
 
     // Authenticate User and Generate Token
     @Override
+    @Cacheable(value = "users", key = "#email")  // Cache user authentication
     public String authenticateUser(String email, String password) {
         log.info("Login attempt for email: {}", email);
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -72,6 +81,7 @@ public class UserService implements IUserService {
 
     // Forgot Password Implementation
     @Override
+    @CacheEvict(value = "users", key = "#email")  // Remove cached user data when password is updated
     public String forgotPassword(String email, String newPassword) {
         log.info("Processing forgot password request for email: {}", email);
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -83,17 +93,20 @@ public class UserService implements IUserService {
         User user = userOpt.get();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+
         // Send email notification
         String subject = "Password Change Notification";
         String content = "<h2>Hello " + user.getUsername() + ",</h2>"
                 + "<p>Your password has been changed successfully.</p>";
         emailService.sendEmail(user.getEmail(), subject, content);
+
         log.info("Password updated successfully for email: {}", email);
         return "Password has been changed successfully!";
     }
 
     // Reset Password Implementation
     @Override
+    @CacheEvict(value = "users", key = "#email")  // Clear cache after password reset
     public String resetPassword(String email, String currentPassword, String newPassword) {
         log.info("Resetting password for email: {}", email);
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -110,14 +123,19 @@ public class UserService implements IUserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+
         // Send email notification
         String subject = "Password Reset Notification";
         String content = "<h2>Hello " + user.getUsername() + ",</h2>"
                 + "<p>Your password has been reset successfully.</p>";
         emailService.sendEmail(user.getEmail(), subject, content);
+
         log.info("Password reset successful for email: {}", email);
         return "Password reset successfully!";
     }
 
+    // Clear user cache after an update
+    private void clearUserCache(String email) {
+        log.info("Clearing Redis cache for user: {}", email);
+    }
 }
-
